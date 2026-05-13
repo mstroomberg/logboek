@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Logboek SB Alkmaar V11</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#080d13;--panel:#101821;--line:#223042;--text:#eaf4ff;--muted:#9db3c8;
+  --head:#111c2d;--field:#090d12;--blue:#6366f1;--green:#0b6b3c;--red:#6b1f2b;
+}
+body.light{
+  --bg:#f3f7fb;--panel:#ffffff;--line:#cbd5e1;--text:#0f172a;--muted:#475569;
+  --head:#dbeafe;--field:#ffffff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;font-weight:600}
+header{padding:12px 10px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+h1{font-size:34px;margin:0;text-shadow:2px 2px #000}
+body.light h1{text-shadow:none}
+.version{font-size:13px;color:var(--muted)}
+.tabs{display:flex;gap:10px;flex-wrap:wrap;width:100%;margin-top:6px}
+.tab{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:10px 18px;cursor:pointer;font-weight:700}
+.tab.active{box-shadow:0 3px 0 var(--blue);background:var(--head)}
+.badge{margin-left:12px;color:var(--muted);font-weight:500}
+.themeBtn{margin-left:auto;align-self:center;background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:9px 14px;cursor:pointer;font-weight:700}
+main{padding:14px 10px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:14px;margin-bottom:14px}
+.help{color:var(--muted);font-size:13px;margin:0 0 16px}
+.row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.valuesGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+label{display:block;color:var(--muted);font-weight:500;margin-bottom:6px}
+input,select,textarea{width:100%;background:var(--field);border:1px solid var(--line);border-radius:9px;color:var(--text);padding:11px 13px;font-size:16px}
+textarea{min-height:130px;resize:vertical}
+.valuesGrid textarea{height:150px;font-family:Consolas,monospace}
+.btn{border:1px solid var(--line);color:var(--text);border-radius:8px;padding:10px 16px;cursor:pointer;font-weight:700;background:var(--panel)}
+.btn.primary{background:#5b5ce8;border-color:#6b6cff;color:#fff}
+.btn.green{background:#064e2d;border-color:#0a7d47;color:#fff}
+.btn.red{background:#3b1018;border-color:#9f3345;color:#fff}
+.btn.small{padding:7px 11px;font-size:13px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.alert{background:#2b0d12;border:1px solid #65313a;padding:14px;border-radius:8px;margin-bottom:14px;color:#fff}
+body.light .alert{background:#fff7ed;border-color:#fed7aa;color:#7c2d12}
+.ok{background:#102b1a;border:1px solid #1e7a40;padding:12px;border-radius:8px;margin-top:12px;display:none;color:#fff}
+.connStatus{padding:8px 12px;border-radius:8px;margin:10px;font-size:13px;font-weight:700;display:none}
+.connStatus.error{background:#2b0d12;border:1px solid #65313a;color:#fff;display:block}
+.connStatus.warn{background:#3a2a0a;border:1px solid #8a6818;color:#ffe9b3;display:block}
+body.light .connStatus.error{background:#fee2e2;border-color:#fca5a5;color:#7f1d1d}
+body.light .connStatus.warn{background:#fef3c7;border-color:#fcd34d;color:#78350f}
+.loading{color:var(--muted);font-style:italic;padding:20px;text-align:center}
+.storageBox{margin-top:20px;padding:16px;background:var(--field);border:1px solid var(--line);border-radius:9px}
+.storageBox h3{margin:0 0 10px;font-size:16px;color:var(--text)}
+.storageBox .stats{font-size:14px;color:var(--muted);margin-bottom:10px}
+.storageBox .stats b{color:var(--text);font-weight:700}
+.storageBar{height:18px;background:#000;border:1px solid var(--line);border-radius:6px;overflow:hidden;position:relative}
+body.light .storageBar{background:#e2e8f0}
+.storageBar .fill{height:100%;transition:width .4s ease,background .4s ease}
+.storageBar .pct{position:absolute;top:0;left:0;right:0;text-align:center;font-size:12px;line-height:18px;font-weight:700;color:#fff;text-shadow:0 0 3px #000}
+body.light .storageBar .pct{color:#0f172a;text-shadow:0 0 3px #fff}
+.storageBox .meta{margin-top:8px;font-size:12px;color:var(--muted)}
+.serverStatusBox{margin-top:20px;padding:16px;background:var(--field);border:1px solid var(--line);border-radius:9px}
+.serverStatusBox h3{margin:0 0 14px;font-size:16px;color:var(--text)}
+.serverStatusRow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+.serverStatusRow:last-child{border-bottom:none}
+.serverDot{width:14px;height:14px;border-radius:50%;flex-shrink:0;transition:background .3s}
+.serverDot.green{background:#22c55e;box-shadow:0 0 6px #22c55e88}
+.serverDot.orange{background:#f59e0b;box-shadow:0 0 6px #f59e0b88}
+.serverDot.red{background:#ef4444;box-shadow:0 0 6px #ef444488}
+.serverDot.grey{background:#475569}
+.bestandenLijst{margin-top:10px}
+.bestandBadge{display:inline-flex;align-items:center;gap:6px;background:var(--field);border:1px solid var(--line);border-radius:6px;padding:5px 10px;margin:3px;font-size:13px;cursor:pointer;text-decoration:none;color:var(--text)}
+.bestandBadge:hover{border-color:#7367ff;color:#7367ff}
+.bestandBadge .ext{background:#7367ff22;color:#7367ff;border-radius:4px;padding:1px 5px;font-size:11px;font-weight:700;text-transform:uppercase}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.toolbar input{max-width:190px}.toolbar select{max-width:150px}
+table{width:100%;border-collapse:separate;border-spacing:0;overflow:hidden;border:1px solid var(--line);border-radius:8px;font-size:14px}
+th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{background:var(--head);cursor:pointer;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+.prio{padding:4px 10px;border-radius:20px;color:#000;font-size:12px;font-weight:800;display:inline-block}
+.prio.Laag{background:#22c55e}.prio.Normaal{background:#f59e0b}.prio.Hoog{background:#ef4444;color:#fff}
+.desc{display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden;line-height:1.35;max-width:700px}
+.desc.open{-webkit-line-clamp:unset}
+.more{color:#7367ff;cursor:pointer;font-size:12px;margin-top:4px}
+.hidden{display:none!important}
+.detailGrid{display:grid;grid-template-columns:210px 1fr;gap:12px;max-width:900px}
+.key{color:#60a5fa;text-transform:uppercase;font-weight:500}
+body.light .key{color:#1d4ed8}
+.photo{max-width:100%;border-radius:10px;margin-top:14px;border:1px solid var(--line)}
+@media(max-width:1000px){.row,.valuesGrid{grid-template-columns:1fr 1fr}table{font-size:13px}}
+@media(max-width:700px){
+  header{padding:8px}h1{font-size:26px}.row,.valuesGrid{grid-template-columns:1fr}.card{padding:10px}
+  th:nth-child(4),td:nth-child(4){display:none}
+  .detailGrid{grid-template-columns:1fr}.key{margin-top:8px}
+}
+
+/* Mobiel: kaartweergave zoals voorbeeld, geen horizontale scrollbalk */
+@media(max-width:900px){
+  header{padding:14px 18px 12px;display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}
+  h1{font-size:28px;line-height:1.15;margin:0}
+  .version{font-size:13px;margin-top:9px}
+  .themeBtn{order:3;margin:4px 0 0 0;font-size:16px;padding:10px 14px}
+  .tabs{order:2;display:flex;flex-wrap:wrap;gap:10px;width:100%;margin-top:8px}
+  .tab{font-size:16px;padding:10px 16px;border-radius:10px}
+  main{padding:12px 18px;overflow-x:hidden}
+  .card{padding:18px;border-radius:16px;overflow:hidden}
+  .toolbar{display:block;margin-bottom:12px}
+  .toolbar input,.toolbar select{display:none}
+  .toolbar .btn.primary{margin:0 0 12px 0!important;font-size:18px;padding:12px 18px;border-radius:12px}
+  .help{font-size:17px;line-height:1.35;margin-bottom:14px}
+  div[style*="overflow:auto"]{overflow:visible!important}
+  table.mobileCards{border:0;background:transparent;width:100%;display:block}
+  table.mobileCards thead{display:none}
+  table.mobileCards tbody{display:block;width:100%}
+  table.mobileCards tr{display:block;width:100%;border:0}
+  table.mobileCards td{display:block;width:100%;border:0;padding:0}
+  .mobileCard{
+    width:100%;
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:22px;
+    margin-bottom:18px;
+    background:var(--field);
+    font-size:22px;
+    line-height:1.35;
+  }
+  .mobileLine{margin-bottom:14px}
+  .mobileLine b{font-size:22px}
+  .mobileDesc{font-size:21px;line-height:1.35;-webkit-line-clamp:4;max-width:none;font-weight:500}
+  .more{font-size:16px}
+  .mobileActions{margin-top:12px;padding-left:30px}
+  .mobileActions .btn{font-size:18px;padding:10px 16px;border-radius:12px}
+  .prio{font-size:15px;padding:5px 12px}
+}
+
+/* Kleinere telefoons */
+@media(max-width:430px){
+  h1{font-size:26px}
+  .version{font-size:12px}
+  .tab{font-size:15px;padding:9px 14px}
+  .themeBtn{font-size:15px}
+  .help{font-size:15px}
+  .mobileCard{font-size:18px;padding:18px}
+  .mobileLine b{font-size:18px}
+  .mobileDesc{font-size:18px}
+  .mobileActions .btn{font-size:15px;padding:8px 14px}
+}
+
+
+.photoGallery{display:flex;flex-wrap:wrap;gap:12px;margin-top:14px}
+.photoThumb{width:160px;max-width:45%;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--field)}
+.photoThumb img{width:100%;height:120px;object-fit:cover;display:block;cursor:pointer}
+.photoThumb .btn{width:100%;border-radius:0;border-left:0;border-right:0;border-bottom:0}
+@media(max-width:700px){
+  .photoGallery{gap:10px}
+  .photoThumb{width:calc(50% - 5px);max-width:none}
+  .photoThumb img{height:110px}
+}
+
+/* Mobiel: voorkom springerig automatisch naar boven scrollen */
+html{
+  overflow-anchor: none;
+  overscroll-behavior-y: contain;
+}
+body{
+  overflow-anchor: none;
+}
+#pinOverlay{position:fixed;inset:0;background:#080d13;z-index:9999;display:flex;justify-content:center;align-items:center}
+body.light #pinOverlay{background:#f1f5f9}
+#pinBox{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:32px;text-align:center;width:320px;max-width:90vw}
+#pinBox h2{margin:0 0 8px;color:var(--text);font-size:22px}
+#pinBox p{color:var(--muted);font-size:14px;margin:0 0 20px}
+#pinInput{width:140px;text-align:center;font-size:28px;letter-spacing:12px;padding:12px;background:var(--field);border:1px solid var(--line);border-radius:9px;color:var(--text);outline:none}
+#pinInput:focus{border-color:#6366f1}
+#pinError{color:#ef4444;font-size:13px;margin-top:10px;display:none}
+
+</style>
+</head>
+<body>
+
+<div id="pinOverlay">
+  <div id="pinBox">
+    <h2>Logboek SB Alkmaar</h2>
+    <p>Voer de pincode in om door te gaan</p>
+    <input id="pinInput" type="password" maxlength="4" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autofocus>
+    <div id="pinError">Onjuiste pincode</div>
+  </div>
+</div>
+
+<header>
+  <h1>Logboek SB Alkmaar</h1><div class="version">(V11)</div>
+  <button class="themeBtn" onclick="toggleTheme()" id="themeBtn">☀️ Licht</button>
+  <nav class="tabs">
+    <button class="tab active" id="tab-overzicht" onclick="showPage('overzicht')">Overzicht <span class="badge" id="countOpen">0</span></button>
+    <button class="tab" id="tab-form" onclick="newForm()">Melding Aanmaken</button>
+    <button class="tab" id="tab-archief" onclick="showPage('archief')">Archief <span class="badge" id="countArchief">0</span></button>
+    <button class="tab" id="tab-waarden" onclick="showPage('waarden')">Waarden Aanpassen</button>
+  </nav>
+</header>
+
+<div id="connStatus" class="connStatus"></div>
+
+<main>
+<section id="page-overzicht" class="card">
+  <div class="toolbar">
+    <input id="filterText" placeholder="Snel filter..." oninput="renderOverview()">
+    <select id="filterPrio" onchange="renderOverview()"><option value="">Alle prio</option><option>Laag</option><option>Normaal</option><option>Hoog</option></select>
+    
+    <button class="btn primary" style="margin-left:auto" onclick="newForm()">Nieuwe melding</button>
+  </div>
+  
+  <div style="overflow:auto"><table>
+    <thead><tr>
+      <th onclick="setSort('id')">ID</th><th onclick="setSort('prio')">Prio</th><th onclick="setSort('plaats')">Plaats</th>
+      <th onclick="setSort('tijd')">Tijd</th>
+      <th onclick="setSort('invoerder')">Invoerder</th><th>Beschrijving</th><th>Geadresseerde</th><th>Foto</th><th>Acties</th>
+    </tr></thead><tbody id="overviewBody"></tbody>
+  </table></div>
+</section>
+
+<section id="page-form" class="card hidden">
+  <h2 id="formTitle">Melding Aanmaken</h2>
+  <form id="meldingForm">
+    <div class="row">
+      <div><label>Prioriteit</label><select id="prio"><option selected>Laag</option><option>Normaal</option><option>Hoog</option></select></div>
+      <div><label>Plaats</label><select id="plaats"></select></div>
+      <div><label>Spoor</label><input id="spoor"></div>
+      <div><label>Trein</label><input id="trein"></div>
+      <div><label>Mat 1</label><input id="mat1"></div>
+      <div><label>Mat 2</label><input id="mat2"></div>
+      <div><label>WO</label><input id="wo"></div>
+      <div><label>Artikel nr</label><input id="artikel_nr"></div>
+      <div><label>Tijd melding</label><div style="display:flex;gap:8px"><input id="tijd" type="datetime-local"><button type="button" class="btn" onclick="document.getElementById('tijd').showPicker()">📅</button><button type="button" class="btn" onclick="setNow()">Nu</button></div></div>
+      <div><label>Besteld</label><div style="display:flex;gap:8px"><input id="besteld" type="datetime-local"><button type="button" class="btn" onclick="document.getElementById('besteld').showPicker()">📅</button><button type="button" class="btn" onclick="setNowBesteld()">Nu</button></div></div>
+      <div><label>Invoerder</label><select id="invoerder"></select></div>
+      <div><label>Geadresseerde</label><select id="geadresseerde"></select></div>
+      <div><label>Foto's uploaden</label><input id="foto" type="file" accept="image/*" multiple></div>
+      <div><label>Bestand uploaden</label><input id="bestand" type="file" multiple><div style="font-size:12px;color:var(--muted);margin-top:4px">Max 50 MB per bestand</div></div>
+      <div><label>Huidige foto</label><span id="currentPhoto">—</span><br><button type="button" class="btn red small hidden" id="removePhotoBtn" onclick="removePhoto()">Foto verwijderen</button></div>
+      <div><label>Huidige bestanden</label><div id="currentBestanden">—</div></div>
+    </div>
+    <div style="margin-top:14px"><label>Beschrijving</label><textarea id="beschrijving"></textarea></div>
+    <div style="margin-top:14px"><label>Opmerkingen</label><textarea id="opmerkingen"></textarea></div>
+    <div class="actions" style="margin-top:16px"><button class="btn primary" type="submit">Opslaan</button><button type="button" class="btn" onclick="showPage('overzicht')">Annuleren</button></div>
+  </form>
+</section>
+
+<section id="page-detail" class="card hidden">
+  <h2 id="detailTitle"></h2><div class="detailGrid" id="detailGrid"></div>
+  <div class="actions" style="margin-top:20px">
+    <button class="btn green" onclick="archiveCurrent()">Archiveren</button>
+    <button class="btn" onclick="editCurrent()">Aanpassen</button>
+    <button class="btn red" onclick="deleteCurrent()">Verwijderen</button>
+    <button class="btn" onclick="showPage('overzicht')">Terug</button>
+  </div><div id="detailPhoto"></div>
+</section>
+
+<section id="page-archief" class="card hidden"><h2>Archief</h2><div id="archiefBody"></div></section>
+
+<section id="page-waarden" class="card hidden">
+  <h2>Waarden Aanpassen</h2>
+  <p class="help">Zet elke waarde op een nieuwe regel. Deze waarden worden direct gebruikt in de dropdowns.</p>
+  <div class="valuesGrid">
+    <div><label>Plaatsen</label><textarea id="waardenPlaatsen"></textarea></div>
+    <div><label>Invoerders</label><textarea id="waardenInvoerders"></textarea></div>
+    <div><label>Geadresseerden</label><textarea id="waardenGeadresseerden"></textarea></div>
+  </div>
+  <div class="actions" style="margin-top:14px">
+    <button class="btn primary" onclick="saveWaarden()">Waarden opslaan</button>
+  </div>
+  <div id="waardenOk" class="ok">Waarden opgeslagen en gekoppeld aan de dropdowns.</div>
+
+  <div class="storageBox">
+    <h3>Bestandsopslag</h3>
+    <div class="stats" id="storageStats">Bezig met berekenen...</div>
+    <div class="storageBar"><div class="fill" id="storageFill" style="width:0%;background:#22c55e"></div><div class="pct" id="storagePct"></div></div>
+    <div class="meta">Foto's en bestanden samen. Totaal beschikbaar: 1 GB. Boven 70% kleurt de balk oranje, boven 90% rood.</div>
+    <div class="actions" style="margin-top:10px"><button class="btn small" onclick="refreshStorageStats()">Vernieuwen</button></div>
+  </div>
+
+  <div class="serverStatusBox">
+    <h3>Serverstatus</h3>
+    <div class="serverStatusRow">
+      <div class="serverDot grey" id="dotVerbinding"></div>
+      <span id="lblVerbinding">Verbinding controleren...</span>
+    </div>
+    <div class="serverStatusRow">
+      <div class="serverDot grey" id="dotOpslag"></div>
+      <span id="lblOpslag">Opslag controleren...</span>
+    </div>
+    <div class="serverStatusRow">
+      <div class="serverDot grey" id="dotRealtime"></div>
+      <span id="lblRealtime">Realtime controleren...</span>
+    </div>
+    <div class="actions" style="margin-top:12px">
+      <button class="btn small" onclick="checkServerStatus()">Vernieuwen</button>
+    </div>
+  </div>
+</section>
+
+<section id="page-data" class="card hidden">
+  <h2>Data</h2>
+  <p class="help">De meldingen worden opgeslagen in een gedeelde cloud-database (Supabase). Wijzigingen van collega's verschijnen automatisch in dit overzicht.</p>
+</section>
+</main>
+
+<footer style="text-align:right;padding:8px 20px;font-size:12px;color:#999;margin:0">
+  Copyright © 2026 M. Stroomberg
+</footer>
+
+<script>
+// ===== Pincode beveiliging =====
+const PIN_CODE = '1817';
+const PIN_KEY = 'sb_logboek_pin_ok';
+
+function checkPin(){
+  if(localStorage.getItem(PIN_KEY) === 'true'){
+    document.getElementById('pinOverlay').style.display = 'none';
+    return;
+  }
+  document.getElementById('pinOverlay').style.display = 'flex';
+  const input = document.getElementById('pinInput');
+  const error = document.getElementById('pinError');
+  input.value = '';
+  input.focus();
+  input.addEventListener('input', function(){
+    error.style.display = 'none';
+    if(this.value.length === 4){
+      if(this.value === PIN_CODE){
+        localStorage.setItem(PIN_KEY, 'true');
+        document.getElementById('pinOverlay').style.display = 'none';
+      } else {
+        error.style.display = 'block';
+        this.value = '';
+        this.focus();
+      }
+    }
+  });
+}
+checkPin();
+
+const defaultWaarden = {
+  plaatsen:["Alkmaar","Hoorn","Enkhuizen","Den Helder","Haarlem","Hoofddorp"],
+  invoerders:["M.stroomberg"],
+  geadresseerden:["—","Teamleider","Wachtdienst","Servicecoördinator","QHSE"],
+  statussen:["Open","In behandeling","Afgerond"]
+};
+let waarden = JSON.parse(JSON.stringify(defaultWaarden));
+let meldingen = [];
+let editId = null, currentId = null;
+let sortState = {key:'id', dir:'desc'};
+const fields = ['prio','plaats','spoor','trein','mat1','mat2','wo','artikel_nr','tijd','besteld','invoerder','geadresseerde','beschrijving','opmerkingen'];
+
+function save(){updateCounts();}
+function lines(id){return document.getElementById(id).value.split('\n').map(x=>x.trim()).filter(Boolean);}
+function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function fillSelect(id, arr, selected){
+  const el=document.getElementById(id); if(!el) return;
+  el.innerHTML = arr.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+  if(selected && arr.includes(selected)) el.value=selected;
+}
+function refreshDropdowns(){
+  fillSelect('plaats',waarden.plaatsen,document.getElementById('plaats')?.value);
+  fillSelect('invoerder',waarden.invoerders,document.getElementById('invoerder')?.value);
+  fillSelect('geadresseerde',waarden.geadresseerden,document.getElementById('geadresseerde')?.value);
+}
+function loadWaardenForm(){
+  document.getElementById('waardenPlaatsen').value = waarden.plaatsen.join('\n');
+  document.getElementById('waardenInvoerders').value = waarden.invoerders.join('\n');
+  document.getElementById('waardenGeadresseerden').value = waarden.geadresseerden.join('\n');
+}
+
+async function loadWaardenFromCloud(){
+  try{
+    const { data, error } = await sb.from('waarden').select('sleutel, waarde');
+    if(error) throw error;
+    if(data && data.length){
+      const map = {};
+      data.forEach(r => map[r.sleutel] = r.waarde);
+      if(map.plaatsen?.length) waarden.plaatsen = map.plaatsen;
+      if(map.invoerders?.length) waarden.invoerders = map.invoerders;
+      if(map.geadresseerden?.length) waarden.geadresseerden = map.geadresseerden;
+    }
+    refreshDropdowns();
+  }catch(e){
+    console.warn('Waarden laden mislukt, lokale standaard wordt gebruikt:', e);
+  }
+}
+
+async function saveWaarden(){
+  const nieuw = {
+    plaatsen: lines('waardenPlaatsen').length ? lines('waardenPlaatsen') : defaultWaarden.plaatsen,
+    invoerders: lines('waardenInvoerders').length ? lines('waardenInvoerders') : defaultWaarden.invoerders,
+    geadresseerden: lines('waardenGeadresseerden').length ? lines('waardenGeadresseerden') : defaultWaarden.geadresseerden,
+    statussen: waarden.statussen || defaultWaarden.statussen
+  };
+
+  try{
+    // Upsert alle drie de sleutels
+    const upserts = [
+      { sleutel: 'plaatsen', waarde: nieuw.plaatsen },
+      { sleutel: 'invoerders', waarde: nieuw.invoerders },
+      { sleutel: 'geadresseerden', waarde: nieuw.geadresseerden }
+    ];
+    const { error } = await sb.from('waarden').upsert(upserts, { onConflict: 'sleutel' });
+    if(error) throw error;
+    waarden = nieuw;
+    refreshDropdowns();
+    const ok=document.getElementById('waardenOk'); ok.style.display='block'; setTimeout(()=>ok.style.display='none',2500);
+  }catch(e){
+    alert('Waarden opslaan mislukt: ' + (e.message||e));
+  }
+}
+function resetWaarden(){ if(!confirm('Standaard waarden terugzetten?')) return; waarden=JSON.parse(JSON.stringify(defaultWaarden)); loadWaardenForm(); refreshDropdowns(); }
+
+function updateCounts(){
+  document.getElementById('countOpen').textContent = meldingen.filter(m=>!m.archived).length;
+  document.getElementById('countArchief').textContent = meldingen.filter(m=>m.archived).length;
+}
+function showPage(p){
+  document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));
+  document.getElementById('page-'+p).classList.remove('hidden');
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  const tab=document.getElementById('tab-'+(p==='form'?'form':p)); if(tab) tab.classList.add('active');
+  if(p==='overzicht') renderOverview();
+  if(p==='archief') renderArchief();
+  if(p==='waarden'){ loadWaardenForm(); refreshStorageStats(); checkServerStatus(); }
+  
+}
+function newForm(){
+  editId=null; document.getElementById('formTitle').textContent='Melding Aanmaken'; document.getElementById('meldingForm').reset(); refreshDropdowns();
+  document.getElementById('prio').value='Laag';
+  document.getElementById('plaats').value=waarden.plaatsen[0]||'';
+  setNow();
+  document.getElementById('currentPhoto').textContent='—';
+  document.getElementById('removePhotoBtn').classList.add('hidden');
+  const cb = document.getElementById('currentBestanden'); if(cb) cb.innerHTML='—';
+  showPage('form');
+}
+function setNow(){document.getElementById('tijd').value = new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);}
+function setNowBesteld(){document.getElementById('besteld').value = new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);}
+function nextId(){return (meldingen.reduce((a,m)=>Math.max(a,Number(m.id)||0),0)+1);}
+function setSort(key){ if(sortState.key===key) sortState.dir=sortState.dir==='asc'?'desc':'asc'; else {sortState.key=key; sortState.dir='asc'} renderOverview();}
+function sortList(list){
+  const prioMap={Laag:1,Normaal:2,Hoog:3};
+  return [...list].sort((a,b)=>{
+    let A=a[sortState.key]??'',B=b[sortState.key]??'';
+    if(sortState.key==='prio'){A=prioMap[A]||99;B=prioMap[B]||99}
+    if(sortState.key==='id'){A=Number(A);B=Number(B)}
+    if(sortState.key==='tijd'){A=new Date(A).getTime();B=new Date(B).getTime()}
+    if(A<B)return sortState.dir==='asc'?-1:1;if(A>B)return sortState.dir==='asc'?1:-1;return 0;
+  });
+}
+function fmtTime(t){ if(!t) return '—'; const d=new Date(t); return d.toLocaleString('nl-NL',{day:'numeric',month:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'}).replace(',','');}
+function val(v){return v&&v!=='—'?escapeHtml(v):'—'}
+function filteredOpen(){
+  const q=document.getElementById('filterText')?.value?.toLowerCase()||'', p=document.getElementById('filterPrio')?.value||'';
+  return meldingen.filter(m=>!m.archived).filter(m=>(!p||m.prio===p)&&(!q||JSON.stringify(m).toLowerCase().includes(q)));
+}
+function renderOverview(){
+  updateCounts(); refreshDropdowns();
+  const body=document.getElementById('overviewBody'); body.innerHTML='';
+  const isMobile = window.innerWidth <= 900;
+  const list = sortList(filteredOpen());
+
+  if(isMobile){
+    const table = body.closest('table');
+    if(table) table.classList.add('mobileCards');
+
+    list.forEach(m=>{
+      const tr=document.createElement('tr');
+      tr.className='mobileRow';
+      tr.innerHTML=`<td colspan="9">
+        <div class="mobileCard">
+          <div class="mobileLine"><b>ID:</b> ${m.id}</div>
+          <div class="mobileLine"><b>Prio:</b> <span class="prio ${escapeHtml(m.prio)}">${escapeHtml(m.prio)}</span></div>
+          <div class="mobileLine"><b>Plaats:</b> ${val(m.plaats)}</div>
+          <div class="mobileLine"><b>Tijd:</b> ${fmtTime(m.tijd)}</div>
+          <div class="mobileLine"><b>Beschrijving:</b><br><div class="desc mobileDesc">${val(m.beschrijving)}</div>${m.beschrijving&&m.beschrijving.length>130?'<div class="more">Lees meer</div>':''}</div>
+          <div class="mobileLine"><b>Foto:</b> ${hasPhotos(m)?'<button class="btn small" onclick="openPhotoForMelding('+m.id+')">📷 '+photoCount(m)+'</button>':'—'} ${m.bestanden&&m.bestanden.length?'<button class="btn small" onclick="openMelding('+m.id+')" style="margin-left:4px">📄 '+m.bestanden.length+'</button>':''}</div>
+          <div class="actions mobileActions">
+            <button class="btn small" onclick="openMelding(${m.id})">Open</button>
+          </div>
+        </div>
+      </td>`;
+
+      const more=tr.querySelector('.more');
+      const desc=tr.querySelector('.desc');
+      if(more) more.onclick=()=>{desc.classList.toggle('open'); more.textContent=desc.classList.contains('open')?'Minder':'Lees meer'};
+      body.appendChild(tr);
+    });
+    return;
+  }
+
+  const table = body.closest('table');
+  if(table) table.classList.remove('mobileCards');
+
+  list.forEach(m=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${m.id}</td><td><span class="prio ${escapeHtml(m.prio)}">${escapeHtml(m.prio)}</span></td><td>${val(m.plaats)}</td><td>${fmtTime(m.tijd)}</td><td>${val(m.invoerder)}</td><td><div class="desc" id="desc-${m.id}">${val(m.beschrijving)}</div><div class="more" id="more-${m.id}" style="display:none">Meer</div></td><td>${val(m.geadresseerde)}</td><td>${hasPhotos(m)?'<button class="btn small" onclick="openPhotoForMelding('+m.id+')">📷 '+photoCount(m)+'</button>':'—'}${m.bestanden&&m.bestanden.length?'<button class="btn small" onclick="openMelding('+m.id+')" style="margin-left:4px">📄 '+m.bestanden.length+'</button>':''}</td><td><div class="actions"><button class="btn small" onclick="openMelding(${m.id})">Open</button><button class="btn green small" onclick="editMelding(${m.id})">Aanpassen</button><button class="btn red small" onclick="deleteMelding(${m.id})">Verwijderen</button></div></td>`;
+    const more=document.getElementById('more-'+m.id);
+    const desc=document.getElementById('desc-'+m.id);
+    if(more && desc){
+      // Controleer of tekst echt afgekapt is door scrollHeight vs clientHeight te vergelijken
+      requestAnimationFrame(()=>{
+        if(desc.scrollHeight > desc.clientHeight + 2){
+          more.style.display = '';
+          more.onclick=()=>{desc.classList.toggle('open'); more.textContent=desc.classList.contains('open')?'Minder':'Meer'};
+        }
+      });
+    }
+    body.appendChild(tr);
+  });
+}
+
+function openPhoto(src){
+  const w = window.open('');
+  if(!w) return;
+  w.document.write('<html><head><title>Foto</title><style>body{margin:0;background:#000;display:flex;justify-content:center;align-items:center;height:100vh}img{max-width:100%;max-height:100%;object-fit:contain}</style></head><body><img src="'+src+'"></body></html>');
+  w.document.close();
+}
+
+function hasPhotos(m){
+  return !!(m && ((m.fotos && m.fotos.length) || m.photo || m.photoPath || m.foto_pad));
+}
+
+function photoCount(m){
+  if(!m) return 0;
+  if(m.fotos && m.fotos.length) return m.fotos.length;
+  return (m.photo || m.photoPath || m.foto_pad) ? 1 : 0;
+}
+
+// Geeft alle foto URLs van een melding terug.
+// Nieuwe V10.6 gebruikt aparte tabel melding_fotos. Oude foto_pad blijft compatibel.
+async function resolvePhotoUrls(m){
+  if(!m) return [];
+  const urls = [];
+
+  if(Array.isArray(m.fotos)){
+    for(const f of m.fotos){
+      const pad = f.foto_pad || f.photoPath || f.path || '';
+      if(pad) urls.push(getPublicPhotoUrl(pad));
+    }
+  }
+
+  if(!urls.length){
+    if(m.foto_pad) urls.push(getPublicPhotoUrl(m.foto_pad));
+    else if(m.photoPath) urls.push(getPublicPhotoUrl(m.photoPath));
+    else if(m.photo) urls.push(m.photo);
+  }
+
+  return urls.filter(Boolean);
+}
+
+async function openPhotoForMelding(id){
+  const m = meldingen.find(x=>x.id===id);
+  const urls = await resolvePhotoUrls(m);
+  if(!urls.length){
+    alert('Foto kon niet geladen worden.');
+    return;
+  }
+
+  const w = window.open('');
+  if(!w) return;
+
+  const imgs = urls.map((url,i)=>`
+    <div style="margin:0 0 18px 0">
+      <div style="color:#fff;font-family:Arial;margin:0 0 6px 0">Foto ${i+1} van ${urls.length}</div>
+      <img src="${url}" style="max-width:100%;max-height:85vh;object-fit:contain;border:1px solid #333;border-radius:8px">
+    </div>
+  `).join('');
+
+  w.document.write('<html><head><title>Fotos</title><style>body{margin:0;background:#000;padding:16px;text-align:center}</style></head><body>'+imgs+'</body></html>');
+  w.document.close();
+}
+
+
+function openMelding(id){
+ currentId=id; const m=meldingen.find(x=>x.id===id); if(!m)return; document.getElementById('detailTitle').textContent='Melding '+m.id;
+ const grid=document.getElementById('detailGrid'); grid.innerHTML='';
+ [['PRIO',m.prio],['PLAATS',m.plaats],['TREIN',m.trein],['SPOOR',m.spoor],['MAT1',m.mat1],['MAT2',m.mat2],['WO',m.wo],['ARTIKEL NR',m.artikel_nr],['INVOERDER',m.invoerder],['GEADRESSEERDE',m.geadresseerde],['TIJD MELDING',fmtTime(m.tijd)],['BESTELD',fmtTime(m.besteld)],['BESCHRIJVING',m.beschrijving],['OPMERKINGEN',m.opmerkingen],['AANTAL FOTO\'S',photoCount(m)],['AANTAL BESTANDEN',(m.bestanden||[]).length]].forEach(([k,v])=>{grid.innerHTML+=`<div class="key">${k}</div><div>${val(v)}</div>`});
+
+ const photoDiv = document.getElementById('detailPhoto');
+ photoDiv.innerHTML = '';
+
+ const bestandenHtml = (m.bestanden && m.bestanden.length)
+   ? '<h3 style="margin:14px 0 6px;font-size:14px">Bestanden</h3>' + renderBestandenLijst(m.bestanden, m.id)
+   : '';
+
+ if(hasPhotos(m)){
+   resolvePhotoUrls(m).then(urls=>{
+     if(currentId !== id) return;
+     const photoHtml = urls.length ? '<div class="photoGallery">' + urls.map((url,idx)=>`
+         <div class="photoThumb">
+           <img src="${url}" onclick="openPhotoForMelding(${m.id})" title="Open foto">
+           <button class="btn red small" onclick="deletePhotoFromMelding(${m.id}, ${idx})">Verwijderen</button>
+         </div>`).join('') + '</div>' : '';
+     photoDiv.innerHTML = photoHtml + bestandenHtml;
+   });
+ } else {
+   photoDiv.innerHTML = bestandenHtml;
+ }
+ showPage('detail');
+}
+function editMelding(id){
+ const m=meldingen.find(x=>x.id===id); if(!m)return; editId=id; refreshDropdowns(); document.getElementById('formTitle').textContent='Melding Aanpassen';
+ fields.forEach(f=>{const el=document.getElementById(f); if(el) el.value=m[f]||''});
+ document.getElementById('foto').value='';
+ const bestandInput = document.getElementById('bestand');
+ if(bestandInput) bestandInput.value='';
+ const hasPhoto = hasPhotos(m);
+ document.getElementById('currentPhoto').textContent=hasPhoto?(photoCount(m)+' foto\'s aanwezig'):'—';
+ document.getElementById('removePhotoBtn').classList.toggle('hidden',!hasPhoto);
+ // Huidige bestanden tonen met verwijder-knop
+ const cb = document.getElementById('currentBestanden');
+ if(cb){
+   cb.innerHTML = (m.bestanden && m.bestanden.length) ? renderBestandenLijst(m.bestanden, m.id) : '—';
+ }
+ showPage('form');
+}
+function editCurrent(){ if(currentId) editMelding(currentId);}
+function deleteMelding(id){
+  if(!confirm('Weet je zeker dat je deze melding wilt verwijderen?')) return;
+  deleteMeldingCloud(id).then(()=>{
+    meldingen=meldingen.filter(m=>m.id!==id);
+    save(); renderOverview(); showPage('overzicht');
+  }).catch(e=>{
+    alert('Verwijderen mislukt: ' + (e.message||e));
+  });
+}
+function deleteCurrent(){ if(currentId) deleteMelding(currentId);}
+async function archiveCurrent(){
+  const m=meldingen.find(x=>x.id===currentId); if(!m)return;
+  try{
+    const updated = await updateMeldingCloud(m.id, {...m, archived:true, status:'Afgerond'});
+    meldingen = meldingen.map(x=>x.id===m.id?updated:x);
+    save();
+    showPage('overzicht');
+  }catch(e){
+    alert('Archiveren mislukt: ' + (e.message||e));
+  }
+}
+async function removePhoto(){
+  const m=meldingen.find(x=>x.id===editId);
+  if(!m) return;
+  if(!confirm("Alle foto\'s bij deze melding verwijderen?")) return;
+
+  try{
+    if(Array.isArray(m.fotos) && m.fotos.length){
+      const paths = m.fotos.map(f=>f.foto_pad).filter(Boolean);
+      if(paths.length){
+        try{ await sb.storage.from('fotos').remove(paths); }catch(_){}
+      }
+      await deleteAllFotosForMeldingCloud(m.id);
+    }
+
+    // Compatibiliteit met oude foto_pad
+    if(m.foto_pad){
+      try{ await sb.storage.from('fotos').remove([m.foto_pad]); }catch(_){}
+      const updated = await updateMeldingCloud(m.id, {...m, foto_pad: ''});
+      Object.assign(m, updated);
+    }
+
+    m.fotos = [];
+    m.foto_pad = '';
+    m.photoPath = '';
+    document.getElementById('currentPhoto').textContent='—';
+    document.getElementById('removePhotoBtn').classList.add('hidden');
+    save();
+    renderOverview();
+  }catch(e){
+    alert('Foto verwijderen mislukt: ' + (e.message||e));
+  }
+}
+
+async function deletePhotoFromMelding(meldingId, index){
+  const m = meldingen.find(x=>x.id===meldingId);
+  if(!m || !Array.isArray(m.fotos) || !m.fotos[index]) return;
+  if(!confirm('Deze foto verwijderen?')) return;
+
+  const foto = m.fotos[index];
+  try{
+    if(foto.foto_pad) await sb.storage.from('fotos').remove([foto.foto_pad]);
+    if(foto.id) await deleteFotoRecordCloud(foto.id);
+    m.fotos.splice(index, 1);
+    save();
+    openMelding(meldingId);
+    renderOverview();
+  }catch(e){
+    alert('Foto verwijderen mislukt: ' + (e.message||e));
+  }
+}
+
+document.getElementById('meldingForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+
+  const submitBtn = e.target.querySelector('button[type=submit]');
+  if(submitBtn){ submitBtn.disabled = true; submitBtn.textContent = 'Bezig met opslaan...'; }
+
+  try{
+    const fileInput = document.getElementById('foto');
+    const files = Array.from(fileInput.files || []);
+    const bestandInput = document.getElementById('bestand');
+    const bestandFiles = bestandInput && bestandInput.files ? Array.from(bestandInput.files) : [];
+
+    const existing = editId ? meldingen.find(m=>m.id===editId) : null;
+
+    const obj = {
+      archived: existing?.archived || false,
+      foto_pad: existing?.foto_pad || ''
+    };
+    fields.forEach(f=>obj[f]=document.getElementById(f)?.value||'');
+    if(!obj.tijd) obj.tijd = new Date().toISOString();
+
+    let saved;
+    if(editId){
+      // Bij aanpassen: eerst opslaan, dan foto's erbij
+      saved = await updateMeldingCloud(editId, obj);
+      saved.fotos = existing?.fotos || [];
+      saved.bestanden = existing?.bestanden || [];
+      meldingen = meldingen.map(m=>m.id===editId?saved:m);
+
+      // Foto's uploaden bij aanpassen
+      if(files.length){
+        const nieuweFotos = [];
+        for(const file of files){
+          const path = await uploadPhotoToCloud(file, saved.id);
+          if(path){ const r = await insertFotoRecordCloud(saved.id, path, file.name); nieuweFotos.push(r); }
+        }
+        saved.fotos = [...(saved.fotos||[]), ...nieuweFotos];
+        meldingen = meldingen.map(m=>m.id===saved.id?saved:m);
+      }
+
+      // Bestanden uploaden bij aanpassen
+      if(bestandFiles.length){
+        const nieuweBestanden = [];
+        for(const file of bestandFiles){
+          const path = await uploadBestandToCloud(file, saved.id);
+          if(path){ const r = await insertBestandRecordCloud(saved.id, path, file.name, file.type, file.size); nieuweBestanden.push(r); }
+        }
+        saved.bestanden = [...(saved.bestanden||[]), ...nieuweBestanden];
+        meldingen = meldingen.map(m=>m.id===saved.id?saved:m);
+      }
+
+    }else{
+      // Bij nieuw: EERST foto's uploaden naar Storage met tijdelijk ID
+      // Dan melding opslaan — realtime trigger vuurt af als foto al klaar is
+      const tijdelijkId = Date.now();
+      const fotoPaden = [];
+      const bestandPaden = [];
+
+      if(files.length){
+        if(submitBtn) submitBtn.textContent = 'Foto uploaden...';
+        for(const file of files){
+          const path = await uploadPhotoToCloud(file, tijdelijkId);
+          if(path) fotoPaden.push({path, naam: file.name});
+        }
+      }
+      if(bestandFiles.length){
+        if(submitBtn) submitBtn.textContent = 'Bestanden uploaden...';
+        for(const file of bestandFiles){
+          const path = await uploadBestandToCloud(file, tijdelijkId);
+          if(path) bestandPaden.push({path, naam: file.name, type: file.type, grootte: file.size});
+        }
+      }
+
+      if(submitBtn) submitBtn.textContent = 'Melding opslaan...';
+      saved = await insertMeldingCloud(obj);
+      saved.fotos = [];
+      saved.bestanden = [];
+
+      // Foto-records aanmaken nu we het echte ID hebben
+      if(fotoPaden.length){
+        const nieuweFotos = [];
+        for(const f of fotoPaden){
+          const r = await insertFotoRecordCloud(saved.id, f.path, f.naam);
+          nieuweFotos.push(r);
+        }
+        saved.fotos = nieuweFotos;
+      }
+
+      // Bestand-records aanmaken
+      if(bestandPaden.length){
+        const nieuweBestanden = [];
+        for(const b of bestandPaden){
+          const r = await insertBestandRecordCloud(saved.id, b.path, b.naam, b.type, b.grootte);
+          nieuweBestanden.push(r);
+        }
+        saved.bestanden = nieuweBestanden;
+      }
+
+      if(!meldingen.find(m=>m.id===saved.id)) meldingen.unshift(saved);
+    }
+
+    editId = null;
+    fileInput.value = '';
+    if(bestandInput) bestandInput.value = '';
+    save();
+    setConnStatus(null);
+    showPage('overzicht');
+  }catch(err){
+    console.error(err);
+    setConnStatus('error', 'Opslaan mislukt: ' + (err.message||err));
+    alert('Opslaan is niet gelukt: ' + (err.message||err) + '\\n\\nControleer je internetverbinding en probeer opnieuw.');
+  }finally{
+    if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Opslaan'; }
+  }
+});
+
+
+function fileToDataUrl(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>res(r.result);
+    r.onerror=()=>rej(r.error);
+    r.readAsDataURL(file);
+  });
+}
+
+function renderArchief(){
+ const div=document.getElementById('archiefBody'); const list=meldingen.filter(m=>m.archived);
+ div.innerHTML=list.length?'<table><thead><tr><th>ID</th><th>Prio</th><th>Tijd</th><th>Beschrijving</th><th>Acties</th></tr></thead><tbody>'+list.map(m=>`<tr><td>${m.id}</td><td>${escapeHtml(m.prio)}</td><td>${fmtTime(m.tijd)}</td><td>${val(m.beschrijving)}</td><td><div class="actions"><button class="btn small" onclick="openMelding(${m.id})">Open</button><button class="btn green small" onclick="restoreMelding(${m.id})">Terugzetten</button></div></td></tr>`).join('')+'</tbody></table>':'Geen archiefmeldingen.';
+}
+
+async function restoreMelding(id){
+  const m = meldingen.find(x=>x.id===id);
+  if(!m) return;
+  if(!confirm('Deze melding terugzetten naar het overzicht?')) return;
+  try{
+    const updated = await updateMeldingCloud(m.id, {...m, archived:false, status:'Open'});
+    meldingen = meldingen.map(x=>x.id===m.id?updated:x);
+    save();
+    renderArchief();
+    setConnStatus(null);
+  }catch(e){
+    alert('Terugzetten mislukt: ' + (e.message||e));
+  }
+}
+
+function renderSearch(){
+ // Zoek-tab is verwijderd in V10.2; functie is een no-op gebleven voor backward compat.
+ const div=document.getElementById('zoekBody');
+ if(!div) return;
+}
+
+// ===== Supabase configuratie =====
+const SUPABASE_URL = 'https://vwhmicwnlkryjicqbbpn.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_aQ7mEFqtoBvoEfQBUTI5WQ_xW6IjBW-';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Mapping tussen JS-velden en database-kolommen
+const dbCols = ['id','prio','status','plaats','spoor','trein','mat1','mat2','wo','mbn','vbk','tijd','invoerder','geadresseerde','beschrijving','opmerkingen','archived','foto_pad'];
+
+function meldingToDb(m){
+  return {
+    prio: m.prio || null,
+    status: m.status || null,
+    plaats: m.plaats || null,
+    spoor: m.spoor || null,
+    trein: m.trein || null,
+    mat1: m.mat1 || null,
+    mat2: m.mat2 || null,
+    wo: m.wo || null,
+    artikel_nr: m.artikel_nr || null,
+    tijd: m.tijd || null,
+    besteld: m.besteld || null,
+    invoerder: m.invoerder || null,
+    geadresseerde: m.geadresseerde || null,
+    beschrijving: m.beschrijving || null,
+    opmerkingen: m.opmerkingen || null,
+    archived: !!m.archived,
+    foto_pad: m.foto_pad || null
+  };
+}
+
+function dbToMelding(row){
+  return {
+    id: row.id,
+    prio: row.prio || '',
+    status: row.status || '',
+    plaats: row.plaats || '',
+    spoor: row.spoor || '',
+    trein: row.trein || '',
+    mat1: row.mat1 || '',
+    mat2: row.mat2 || '',
+    wo: row.wo || '',
+    artikel_nr: row.artikel_nr || '',
+    tijd: row.tijd || '',
+    besteld: row.besteld || '',
+    invoerder: row.invoerder || '',
+    geadresseerde: row.geadresseerde || '',
+    beschrijving: row.beschrijving || '',
+    opmerkingen: row.opmerkingen || '',
+    archived: !!row.archived,
+    foto_pad: row.foto_pad || '',
+    photoPath: row.foto_pad || '',
+    fotos: row.fotos || [],
+    bestanden: row.bestanden || []
+  };
+}
+
+function setConnStatus(type, msg){
+  const el = document.getElementById('connStatus');
+  if(!el) return;
+  el.className = 'connStatus';
+  if(!type){ el.style.display='none'; return; }
+  el.classList.add(type);
+  el.textContent = msg;
+}
+
+// Bijhouden of realtime actief is — wordt gezet door startRealtime()
+let realtimeActief = false;
+
+function setDot(id, kleur, label){
+  const dot = document.getElementById(id);
+  const lbl = document.getElementById(id.replace('dot','lbl'));
+  if(dot){ dot.className = 'serverDot ' + kleur; }
+  if(lbl){ lbl.textContent = label; }
+}
+
+async function checkServerStatus(){
+  // Reset naar oranje "bezig" tijdens de check
+  setDot('dotVerbinding', 'orange', 'Bezig met laden...');
+  setDot('dotOpslag', 'orange', 'Bezig met laden...');
+  setDot('dotRealtime', realtimeActief ? 'green' : 'grey',
+    realtimeActief ? 'Realtime actief — wijzigingen van collega\'s worden direct doorgegeven' : 'Realtime nog niet gestart');
+
+  // Check 1: database bereikbaar? Probeer één rij op te halen.
+  try{
+    const { error } = await sb.from('meldingen').select('id').limit(1);
+    if(error) throw error;
+    setDot('dotVerbinding', 'green', 'Verbonden met server');
+  }catch(e){
+    setDot('dotVerbinding', 'red', 'Geen verbinding / opslaan mislukt');
+  }
+
+  // Check 2: opslag bereikbaar? Probeer de bucket te listen.
+  try{
+    const { error } = await sb.storage.from('fotos').list('', {limit:1});
+    if(error) throw error;
+    setDot('dotOpslag', 'green', 'Bestandsopslag bereikbaar');
+  }catch(e){
+    // Probeer ook met hoofdletter (Fotos) voor het geval de bucket zo heet
+    try{
+      const { error2 } = await sb.storage.from('Fotos').list('', {limit:1});
+      if(error2) throw error2;
+      setDot('dotOpslag', 'green', 'Bestandsopslag bereikbaar');
+    }catch(e2){
+      setDot('dotOpslag', 'red', 'Bestandsopslag niet bereikbaar');
+    }
+  }
+}
+
+
+function dbToFoto(row){
+  return {
+    id: row.id,
+    melding_id: row.melding_id,
+    foto_pad: row.foto_pad || '',
+    bestandsnaam: row.bestandsnaam || '',
+    created_at: row.created_at || ''
+  };
+}
+
+async function loadFotosForMeldingen(){
+  const { data, error } = await sb.from('melding_fotos').select('*').order('id', {ascending:true});
+  if(error) throw error;
+
+  const byMelding = {};
+  (data||[]).forEach(row=>{
+    const f = dbToFoto(row);
+    if(!byMelding[f.melding_id]) byMelding[f.melding_id] = [];
+    byMelding[f.melding_id].push(f);
+  });
+
+  meldingen = meldingen.map(m=>({...m, fotos: byMelding[m.id] || []}));
+
+  // Bestanden ook laden
+  await loadBestandenForMeldingen();
+}
+
+async function loadBestandenForMeldingen(){
+  try{
+    const { data, error } = await sb.from('melding_bestanden').select('*').order('id', {ascending:true});
+    if(error) throw error;
+    const byMelding = {};
+    (data||[]).forEach(row=>{
+      const b = dbToBestand(row);
+      if(!byMelding[b.melding_id]) byMelding[b.melding_id] = [];
+      byMelding[b.melding_id].push(b);
+    });
+    meldingen = meldingen.map(m=>({...m, bestanden: byMelding[m.id] || []}));
+  }catch(e){
+    console.warn('Bestanden laden mislukt', e);
+  }
+}
+
+async function insertFotoRecordCloud(meldingId, fotoPad, bestandsnaam){
+  const { data, error } = await sb.from('melding_fotos')
+    .insert({melding_id: meldingId, foto_pad: fotoPad, bestandsnaam: bestandsnaam || null})
+    .select()
+    .single();
+  if(error) throw error;
+  return dbToFoto(data);
+}
+
+async function deleteFotoRecordCloud(id){
+  const { error } = await sb.from('melding_fotos').delete().eq('id', id);
+  if(error) throw error;
+}
+
+async function deleteAllFotosForMeldingCloud(meldingId){
+  const { error } = await sb.from('melding_fotos').delete().eq('melding_id', meldingId);
+  if(error) throw error;
+}
+
+
+async function loadMeldingenFromCloud(){
+  try{
+    setConnStatus('warn', 'Meldingen laden...');
+    const { data, error } = await sb.from('meldingen').select('*').order('id', {ascending:false});
+    if(error) throw error;
+    meldingen = (data||[]).map(dbToMelding);
+    await loadFotosForMeldingen();
+    setConnStatus(null);
+    updateCounts();
+    renderOverview();
+    renderSearch();
+  }catch(e){
+    console.error(e);
+    setConnStatus('error', 'Kon meldingen niet laden: ' + (e.message||e) + '. Controleer je internetverbinding.');
+  }
+}
+
+async function insertMeldingCloud(m){
+  const { data, error } = await sb.from('meldingen').insert(meldingToDb(m)).select().single();
+  if(error) throw error;
+  return dbToMelding(data);
+}
+
+async function updateMeldingCloud(id, m){
+  const { data, error } = await sb.from('meldingen').update(meldingToDb(m)).eq('id', id).select().single();
+  if(error) throw error;
+  return dbToMelding(data);
+}
+
+async function deleteMeldingCloud(id){
+  const m = meldingen.find(x=>x.id===id);
+  const fotoPaths = [];
+  const bestandPaths = [];
+
+  if(m){
+    if(Array.isArray(m.fotos)) fotoPaths.push(...m.fotos.map(f=>f.foto_pad).filter(Boolean));
+    if(m.foto_pad) fotoPaths.push(m.foto_pad);
+    if(Array.isArray(m.bestanden)) bestandPaths.push(...m.bestanden.map(b=>b.bestand_pad).filter(Boolean));
+  }
+
+  if(fotoPaths.length){
+    try{ await sb.storage.from('fotos').remove(fotoPaths); }catch(e){ console.warn('Foto verwijderen mislukt', e); }
+  }
+  if(bestandPaths.length){
+    try{ await sb.storage.from('bestanden').remove(bestandPaths); }catch(e){ console.warn('Bestand verwijderen mislukt', e); }
+  }
+
+  const { error } = await sb.from('meldingen').delete().eq('id', id);
+  if(error) throw error;
+}
+
+async function uploadPhotoToCloud(file, meldingId){
+  if(!file) return '';
+  try{
+    // Optioneel verkleinen voor opslagbesparing
+    const safeName = file.name.replace(/[^\w.\-]+/g,'_');
+    const path = 'melding_' + (meldingId||'nieuw') + '_' + Date.now() + '_' + safeName;
+    const { error } = await sb.storage.from('fotos').upload(path, file, {upsert:false, contentType:file.type});
+    if(error) throw error;
+    return path;
+  }catch(e){
+    console.error('Foto upload mislukt', e);
+    setConnStatus('error', 'Foto kon niet geüpload worden: ' + (e.message||e));
+    return '';
+  }
+}
+
+function getPublicPhotoUrl(fotoPad){
+  if(!fotoPad) return '';
+  const { data } = sb.storage.from('fotos').getPublicUrl(fotoPad);
+  return data?.publicUrl || '';
+}
+
+function getPublicBestandUrl(bestandPad){
+  if(!bestandPad) return '';
+  const { data } = sb.storage.from('bestanden').getPublicUrl(bestandPad);
+  return data?.publicUrl || '';
+}
+
+function dbToBestand(row){
+  return {
+    id: row.id,
+    melding_id: row.melding_id,
+    bestand_pad: row.bestand_pad || '',
+    bestandsnaam: row.bestandsnaam || '',
+    bestandstype: row.bestandstype || '',
+    grootte: row.grootte || 0,
+    aangemaakt_op: row.aangemaakt_op || ''
+  };
+}
+
+async function uploadBestandToCloud(file, meldingId){
+  if(!file) return '';
+  try{
+    const safeName = file.name.replace(/[^\w.\-]+/g,'_');
+    const path = 'melding_' + meldingId + '_' + Date.now() + '_' + safeName;
+    const { error } = await sb.storage.from('bestanden').upload(path, file, {upsert:false, contentType:file.type});
+    if(error) throw error;
+    return path;
+  }catch(e){
+    console.error('Bestand upload mislukt', e);
+    setConnStatus('error', 'Bestand kon niet geüpload worden: ' + (e.message||e));
+    return '';
+  }
+}
+
+async function insertBestandRecordCloud(meldingId, bestandPad, bestandsnaam, bestandstype, grootte){
+  const { data, error } = await sb.from('melding_bestanden')
+    .insert({ melding_id: meldingId, bestand_pad: bestandPad, bestandsnaam, bestandstype, grootte })
+    .select().single();
+  if(error) throw error;
+  return dbToBestand(data);
+}
+
+function bestandExtensie(naam){
+  if(!naam) return '?';
+  const parts = naam.split('.');
+  return parts.length > 1 ? parts[parts.length-1].toUpperCase() : '?';
+}
+
+function renderBestandenLijst(bestanden, meldingId){
+  if(!bestanden || !bestanden.length) return '';
+  return '<div class="bestandenLijst">' + bestanden.map(b=>{
+    const url = getPublicBestandUrl(b.bestand_pad);
+    const ext = bestandExtensie(b.bestandsnaam);
+    const naam = b.bestandsnaam || b.bestand_pad.split('_').pop();
+    const kb = b.grootte ? ' · ' + (b.grootte/1024).toFixed(0) + ' KB' : '';
+    const verwijderKnop = meldingId
+      ? `<button class="btn red small" style="margin-left:6px" onclick="event.preventDefault();event.stopPropagation();deleteBestandFromMelding(${meldingId}, ${b.id})">×</button>`
+      : '';
+    return `<span style="display:inline-flex;align-items:center;margin:3px"><a class="bestandBadge" href="${url}" target="_blank" rel="noopener"><span class="ext">${ext}</span>${escapeHtml(naam)}${kb}</a>${verwijderKnop}</span>`;
+  }).join('') + '</div>';
+}
+
+async function deleteBestandFromMelding(meldingId, bestandId){
+  if(!confirm('Dit bestand verwijderen?')) return;
+  const m = meldingen.find(x=>x.id===meldingId);
+  if(!m) return;
+  const b = (m.bestanden||[]).find(x=>x.id===bestandId);
+  if(!b) return;
+  try{
+    if(b.bestand_pad){
+      try{ await sb.storage.from('bestanden').remove([b.bestand_pad]); }catch(_){}
+    }
+    const { error } = await sb.from('melding_bestanden').delete().eq('id', bestandId);
+    if(error) throw error;
+    m.bestanden = (m.bestanden||[]).filter(x=>x.id!==bestandId);
+    meldingen = meldingen.map(x=>x.id===meldingId?m:x);
+    save();
+    openMelding(meldingId);
+  }catch(e){
+    alert('Bestand verwijderen mislukt: ' + (e.message||e));
+  }
+}
+async function refreshStorageStats(){
+  const statsEl = document.getElementById('storageStats');
+  const fillEl = document.getElementById('storageFill');
+  const pctEl = document.getElementById('storagePct');
+  if(!statsEl || !fillEl || !pctEl) return;
+
+  statsEl.textContent = 'Bezig met berekenen...';
+  fillEl.style.width = '0%';
+  pctEl.textContent = '';
+
+  async function tellBucket(bucket){
+    let bytes = 0, files = 0, offset = 0;
+    const pageSize = 100;
+    while(true){
+      const { data, error } = await sb.storage.from(bucket).list('', {limit: pageSize, offset, sortBy:{column:'name', order:'asc'}});
+      if(error) throw error;
+      if(!data || !data.length) break;
+      for(const f of data){
+        // Sla mappen en lege placeholder-objecten over
+        if(!f.metadata || typeof f.metadata.size !== 'number' || f.metadata.size === 0) continue;
+        bytes += f.metadata.size;
+        files++;
+      }
+      if(data.length < pageSize) break;
+      offset += pageSize;
+      if(offset > 5000) break;
+    }
+    return { bytes, files };
+  }
+
+  try{
+    let fotos = { bytes: 0, files: 0 };
+    let bestanden = { bytes: 0, files: 0 };
+    try{ fotos = await tellBucket('fotos'); }catch(_){}
+    try{ bestanden = await tellBucket('bestanden'); }catch(_){}
+
+    const totalBytes = fotos.bytes + bestanden.bytes;
+    const limitBytes = 1024 * 1024 * 1024; // 1 GB
+    const pct = Math.min(100, (totalBytes / limitBytes) * 100);
+    const usedMB = totalBytes / (1024*1024);
+
+    let color = '#22c55e';
+    if(pct >= 90) color = '#ef4444';
+    else if(pct >= 70) color = '#f59e0b';
+
+    statsEl.innerHTML = `<b>${usedMB.toFixed(1)} MB</b> gebruikt van 1 GB &nbsp;·&nbsp; <b>${fotos.files}</b> foto${fotos.files===1?'':'s'} &nbsp;·&nbsp; <b>${bestanden.files}</b> bestand${bestanden.files===1?'':'en'}`;
+    fillEl.style.width = pct.toFixed(1) + '%';
+    fillEl.style.background = color;
+    pctEl.textContent = pct < 1 ? '<1%' : pct.toFixed(1) + '%';
+  }catch(e){
+    console.error('Storage stats ophalen mislukt', e);
+    statsEl.textContent = 'Kon foto-opslag niet berekenen: ' + (e.message||e);
+    fillEl.style.width = '0%';
+    pctEl.textContent = '';
+  }
+}
+
+// Realtime: luister naar wijzigingen van collega's
+function startRealtime(){
+  sb.channel('meldingen-changes')
+    .on('postgres_changes', { event:'*', schema:'public', table:'meldingen' }, async (payload)=>{
+      if(payload.eventType === 'INSERT'){
+        const m = dbToMelding(payload.new);
+        let fotos = [];
+        let bestanden = [];
+
+        // Voeg de melding direct toe (zonder fotos) zodat hij meteen verschijnt
+        const initieel = {...m, fotos:[], bestanden:[]};
+        if(meldingen.find(x=>x.id===m.id)){
+          meldingen = meldingen.map(x=>x.id===m.id?initieel:x);
+        } else {
+          meldingen.unshift(initieel);
+        }
+        updateCounts(); renderOverview();
+
+        // Polling: check elke 1.5 seconden of er fotos/bestanden zijn binnengekomen
+        // Max 8 keer = 12 seconden. Stopt zodra we wijzigingen detecteren.
+        let pogingen = 0;
+        const maxPogingen = 8;
+        const checkInterval = setInterval(async ()=>{
+          pogingen++;
+          try{
+            const { data: fd } = await sb.from('melding_fotos').select('*').eq('melding_id', m.id);
+            const { data: bd } = await sb.from('melding_bestanden').select('*').eq('melding_id', m.id);
+            const nieuweFotos = (fd||[]).map(dbToFoto);
+            const nieuweBestanden = (bd||[]).map(dbToBestand);
+
+            const huidige = meldingen.find(x=>x.id===m.id);
+            const veranderdFotos = (huidige?.fotos||[]).length !== nieuweFotos.length;
+            const veranderdBestanden = (huidige?.bestanden||[]).length !== nieuweBestanden.length;
+
+            if(veranderdFotos || veranderdBestanden){
+              meldingen = meldingen.map(x=>x.id===m.id?{...x, fotos:nieuweFotos, bestanden:nieuweBestanden}:x);
+              renderOverview();
+            }
+            // Stop als we al fotos/bestanden hebben EN polling al een paar keer is geweest
+            if((nieuweFotos.length > 0 || nieuweBestanden.length > 0) && pogingen >= 2){
+              clearInterval(checkInterval);
+            }
+            if(pogingen >= maxPogingen){
+              clearInterval(checkInterval);
+            }
+          }catch(_){
+            if(pogingen >= maxPogingen) clearInterval(checkInterval);
+          }
+        }, 1500);
+      } else if(payload.eventType === 'UPDATE'){
+        const m = dbToMelding(payload.new);
+        const old = meldingen.find(x=>x.id===m.id);
+        // Bij update ook fotos opnieuw ophalen als er nog geen waren
+        let fotos = old?.fotos || [];
+        if(!fotos.length && (m.foto_pad || payload.new.foto_pad)){
+          try{
+            const { data } = await sb.from('melding_fotos').select('*').eq('melding_id', m.id);
+            fotos = (data||[]).map(dbToFoto);
+          }catch(_){}
+        }
+        meldingen = meldingen.map(x=>x.id===m.id?{...m, fotos}:x);
+      } else if(payload.eventType === 'DELETE'){
+        meldingen = meldingen.filter(x=>x.id!==payload.old.id);
+      }
+      updateCounts();
+      renderOverview();
+      renderSearch();
+    })
+    .subscribe((status)=>{
+      if(status === 'SUBSCRIBED'){
+        realtimeActief = true;
+        setDot('dotRealtime', 'green', 'Realtime actief — wijzigingen van collega\'s worden direct doorgegeven');
+      }
+    });
+
+  sb.channel('melding-fotos-changes')
+    .on('postgres_changes', { event:'*', schema:'public', table:'melding_fotos' }, async (payload)=>{
+      if(payload.eventType === 'INSERT'){
+        const f = dbToFoto(payload.new);
+        // Eerst direct de foto toevoegen aan de melding zodat het knopje verschijnt
+        meldingen = meldingen.map(m=>{
+          if(m.id !== f.melding_id) return m;
+          const fotos = m.fotos || [];
+          if(fotos.find(x=>x.id===f.id)) return m;
+          return {...m, fotos:[...fotos, f]};
+        });
+        updateCounts(); renderOverview();
+        // Na 3 seconden opnieuw laden — geeft tijd voor foto-records aanmaken
+        setTimeout(async ()=>{
+          try{
+            const { data } = await sb.from('melding_fotos').select('*').eq('melding_id', f.melding_id);
+            const fotos = (data||[]).map(dbToFoto);
+            meldingen = meldingen.map(m=>m.id===f.melding_id?{...m, fotos}:m);
+            renderOverview();
+          }catch(_){}
+        }, 3000);
+        // Tweede check na 6 seconden voor het geval de upload trager was
+        setTimeout(async ()=>{
+          try{
+            const { data } = await sb.from('melding_fotos').select('*').eq('melding_id', f.melding_id);
+            const fotos = (data||[]).map(dbToFoto);
+            meldingen = meldingen.map(m=>m.id===f.melding_id?{...m, fotos}:m);
+            renderOverview();
+          }catch(_){}
+        }, 6000);
+      } else if(payload.eventType === 'UPDATE'){
+        const f = dbToFoto(payload.new);
+        meldingen = meldingen.map(m=>m.id===f.melding_id?{...m, fotos:(m.fotos||[]).map(x=>x.id===f.id?f:x)}:m);
+        updateCounts(); renderOverview();
+      } else if(payload.eventType === 'DELETE'){
+        const old = payload.old;
+        meldingen = meldingen.map(m=>m.id===old.melding_id?{...m, fotos:(m.fotos||[]).filter(x=>x.id!==old.id)}:m);
+        updateCounts(); renderOverview();
+      }
+    })
+    .subscribe();
+
+  // Realtime voor bestanden
+  sb.channel('melding-bestanden-changes')
+    .on('postgres_changes', { event:'*', schema:'public', table:'melding_bestanden' }, (payload)=>{
+      if(payload.eventType === 'INSERT'){
+        const b = dbToBestand(payload.new);
+        meldingen = meldingen.map(m=>{
+          if(m.id !== b.melding_id) return m;
+          const bestanden = m.bestanden || [];
+          if(bestanden.find(x=>x.id===b.id)) return m;
+          return {...m, bestanden:[...bestanden, b]};
+        });
+      } else if(payload.eventType === 'DELETE'){
+        const old = payload.old;
+        meldingen = meldingen.map(m=>m.id===old.melding_id?{...m, bestanden:(m.bestanden||[]).filter(x=>x.id!==old.id)}:m);
+      }
+      updateCounts(); renderOverview();
+    })
+    .subscribe();
+}
+
+function toggleTheme(){
+  document.body.classList.toggle('light');
+  const isLight=document.body.classList.contains('light');
+  localStorage.setItem('sb_logboek_theme_v84',isLight?'light':'dark');
+  document.getElementById('themeBtn').textContent=isLight?'🌙 Donker':'☀️ Licht';
+}
+function loadTheme(){
+  if(localStorage.getItem('sb_logboek_theme_v84')==='light'){document.body.classList.add('light'); document.getElementById('themeBtn').textContent='🌙 Donker';}
+}
+
+window.addEventListener('orientationchange', ()=>setTimeout(renderOverview, 250));
+loadTheme(); setNow(); updateCounts();
+loadWaardenFromCloud().then(()=>{
+  refreshDropdowns();
+  loadMeldingenFromCloud().then(()=>startRealtime());
+});
+</script>
+</body>
+</html>
